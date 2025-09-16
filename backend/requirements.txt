@@ -1,4 +1,8 @@
 flask
+flask-cors
 joblib
 scikit-learn
 xgboost
+pandas
+nfl_data_py
+gunicorn
