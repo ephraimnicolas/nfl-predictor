@@ -70,19 +70,24 @@ team_stats = team_stats[feature_cols]
 # Helper
 # ==============================
 def predict_matchup(model, home, away):
-    if home not in team_stats.index or away not in team_stats.index:
-        return None, None
+    # build_features is your existing function that builds the input features
+    features = build_features(home, away)
+    try:
+        if hasattr(model, "predict_proba"):
+            # Classifier: use proper probabilities
+            probs = model.predict_proba(features)[0]
+            home_prob, away_prob = probs[0], probs[1]
+        else:
+            # Regressor fallback: use raw prediction as "probability"
+            pred = model.predict(features)[0]
+            home_prob = float(pred)
+            away_prob = 1 - home_prob
+    except Exception as e:
+        raise RuntimeError(f"Model error: {e}")
 
-    home_stats = team_stats.loc[home]
-    away_stats = team_stats.loc[away]
-    diff = (home_stats - away_stats).to_frame().T  # keep feature names
+    winner = home if home_prob > away_prob else away
+    return winner, {"home": float(home_prob), "away": float(away_prob)}
 
-    proba = model.predict_proba(diff)[0]
-    home_win_prob = float(proba[1])
-    away_win_prob = float(proba[0])
-    winner = home if home_win_prob >= away_win_prob else away
-
-    return winner, {"home": home_win_prob, "away": away_win_prob}
 
 # ==============================
 # Endpoints
