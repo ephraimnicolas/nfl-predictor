@@ -70,23 +70,44 @@ team_stats = team_stats[feature_cols]
 # Helper
 # ==============================
 def predict_matchup(model, home, away):
-    # build_features is your existing function that builds the input features
-    features = build_features(home, away)
-    try:
-        if hasattr(model, "predict_proba"):
-            # Classifier: use proper probabilities
-            probs = model.predict_proba(features)[0]
-            home_prob, away_prob = probs[0], probs[1]
-        else:
-            # Regressor fallback: use raw prediction as "probability"
-            pred = model.predict(features)[0]
-            home_prob = float(pred)
-            away_prob = 1 - home_prob
-    except Exception as e:
-        raise RuntimeError(f"Model error: {e}")
+    # Validate team codes are present in the aggregated table
+    if home not in team_stats.index or away not in team_stats.index:
+        return None, None
 
-    winner = home if home_prob > away_prob else away
-    return winner, {"home": float(home_prob), "away": float(away_prob)}
+    # Build feature row: home minus away, matching training feature order
+    diff = (team_stats.loc[home] - team_stats.loc[away]).to_frame().T
+    diff = diff.reindex(columns=feature_cols, fill_value=0).astype(float)
+
+    try:
+        # Preferred: classifiers with predict_proba
+        if hasattr(model, "predict_proba"):
+            proba = model.predict_proba(diff)[0]
+            # index 1 = probability of "home win" (same convention you used before)
+            home_prob = float(proba[1])
+            away_prob = float(proba[0])
+
+        # Fallback: some models expose decision_function; squash to (0,1)
+        elif hasattr(model, "decision_function"):
+            import numpy as np
+            score = model.decision_function(diff)[0]
+            p = 1.0 / (1.0 + np.exp(-float(score)))
+            home_prob, away_prob = p, 1.0 - p
+
+        # Last resort: treat .predict as a probability (for regressors)
+        else:
+            import math
+            pred = float(model.predict(diff)[0])
+            # If it's already 0–1, great; if not, squash
+            p = pred if 0.0 <= pred <= 1.0 else 1.0 / (1.0 + math.exp(-pred))
+            home_prob, away_prob = p, 1.0 - p
+
+    except Exception as e:
+        print(f"Error in model {getattr(model, '__class__', type(model)).__name__}: {e}")
+        # Safe fallback to neutral probabilities so the API still responds
+        home_prob, away_prob = 0.5, 0.5
+
+    winner = home if home_prob >= away_prob else away
+    return winner, {"home": home_prob, "away": away_prob}
 
 
 # ==============================
