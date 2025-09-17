@@ -90,7 +90,10 @@ def predict_matchup(model, home, away):
 @app.route("/predict", methods=["POST"])
 def predict():
     data = request.get_json()
+    print("Received data:", data, flush=True)  # force flush
+
     home, away = data.get("home"), data.get("away")
+    print("Home:", home, "Away:", away, flush=True)
 
     results, probabilities = {}, {}
 
@@ -100,9 +103,16 @@ def predict():
         "xgboost": xgb_model,
         "ensemble": ensemble
     }.items():
-        winner, probs = predict_matchup(model, home, away)
+        try:
+            winner, probs = predict_matchup(model, home, away)
+            print(f"{name} -> winner: {winner}, probs: {probs}", flush=True)
+        except Exception as e:
+            print(f"Error in {name} model: {e}", flush=True)
+            return jsonify({"error": str(e)}), 500
+
         if winner is None:
             return jsonify({"error": "Invalid team code"}), 400
+
         results[name] = winner
         probabilities[name] = probs
 
@@ -112,6 +122,7 @@ def predict():
         "predictions": results,
         "probabilities": probabilities
     })
+
 
 @app.route("/teams", methods=["GET"])
 def teams():
