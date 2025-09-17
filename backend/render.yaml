@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: nfl-backend
+    env: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: gunicorn -w 4 -b 0.0.0.0:10000 app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
