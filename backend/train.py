@@ -131,14 +131,16 @@ logreg = LogisticRegression(max_iter=2000).fit(X_train, y_train)
 rf_raw = RandomForestClassifier(n_estimators=400, random_state=42)
 rf = CalibratedClassifierCV(rf_raw, method="isotonic", cv=5).fit(X_train, y_train)
 
-xgb_raw = xgb.XGBClassifier(
+xgb_model = xgb.XGBClassifier(
     eval_metric="logloss",
     n_estimators=400,
-    random_state=42
+    random_state=42,
+    use_label_encoder=False
 )
-xgb_model = CalibratedClassifierCV(xgb_raw, method="isotonic", cv=5).fit(X_train, y_train)
+xgb_model.fit(X_train, y_train)
 
 print("Models trained successfully!")
+
 
 # ==============================
 # Step 8: Weighted ensemble
