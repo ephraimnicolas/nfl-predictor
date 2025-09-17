@@ -25,7 +25,7 @@ export default function UpcomingGames() {
   return (
     <div className="flex justify-center items-start min-h-screen bg-white py-16 px-4">
       <div className="w-full max-w-4xl bg-white p-10 rounded-lg shadow-md border border-gray-200">
-        <h2 className="text-2xl font-bold mb-8 text-center">Upcoming Games</h2>
+        <h2 className="text-2xl font-bold mb-8 text-center">Past Games</h2>
 
         {games.length === 0 ? (
           <p className="text-center text-gray-500">Loading...</p>

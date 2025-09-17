@@ -164,7 +164,8 @@ export default function Predictor() {
             </div>
 
             {/* Pie charts side by side */}
-            <div className="flex justify-center gap-12">
+            {/* Pie charts responsive layout */}
+            <div className="flex flex-col md:flex-row justify-center gap-8">
               {["logistic", "randomforest", "xgboost"].map((model) => {
                 const probs = prediction.probabilities[model];
                 const data = [
@@ -175,12 +176,12 @@ export default function Predictor() {
                 return (
                   <div
                     key={model}
-                    className="p-6 border rounded-lg bg-white shadow w-96"
+                    className="p-4 border rounded-lg bg-white shadow w-full md:w-80"
                   >
                     <h4 className="font-semibold capitalize mb-4 text-lg">
                       {model}
                     </h4>
-                    <ResponsiveContainer width="100%" height={300}>
+                    <ResponsiveContainer width="100%" height={240}>
                       <PieChart>
                         <Pie
                           data={data}
@@ -188,7 +189,7 @@ export default function Predictor() {
                           nameKey="name"
                           cx="50%"
                           cy="50%"
-                          outerRadius={110}
+                          outerRadius={90} // ✅ smaller chart
                           label={({ name, value }) =>
                             `${name}: ${(value * 100).toFixed(1)}%`
                           }
@@ -206,6 +207,7 @@ export default function Predictor() {
                 );
               })}
             </div>
+
           </div>
         )}
       </div>
