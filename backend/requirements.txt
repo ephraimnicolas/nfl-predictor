@@ -1,14 +1,8 @@
-# Lock Python runtime for Render
-python_version >=3.10,<3.13
-
-# Core web framework
-Flask==3.0.3
-flask-cors==4.0.1
-gunicorn==21.2.0
-
-# ML + data stack
-joblib==1.4.2
-scikit-learn==1.5.1
-xgboost==2.1.1
-pandas==2.2.2
-nfl-data-py==0.3.2
+flask
+flask-cors
+joblib
+scikit-learn
+xgboost
+pandas
+nfl_data_py
+gunicorn
