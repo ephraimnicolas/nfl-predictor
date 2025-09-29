@@ -5,7 +5,7 @@ export default function UpcomingGames() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:5000/games")
+    fetch(`${import.meta.env.VITE_API_URL}/games`)
       .then(res => res.json())
       .then(data => {
         console.log("Games from backend:", data); // 🔎 Debug
