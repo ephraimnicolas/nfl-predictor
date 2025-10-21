@@ -39,33 +39,35 @@ const teamLogos = {
 const nflLogo =
   "https://upload.wikimedia.org/wikipedia/en/a/a2/National_Football_League_logo.svg";
 
-// Teal (Jaguars) for home, Black for away
 const COLORS = ["#006778", "#000000"];
 
 export default function Predictor() {
   const [awayTeam, setAwayTeam] = useState("");
   const [homeTeam, setHomeTeam] = useState("");
   const [prediction, setPrediction] = useState(null);
-  const resultsRef = useRef(null); // 🔑 for scrolling
+  const [showWarm, setShowWarm] = useState(false);
+  const resultsRef = useRef(null);
 
   const handlePredict = async () => {
     if (!awayTeam || !homeTeam) return alert("Select both teams!");
+    setShowWarm(true); // show banner while waiting
 
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/predict`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ home: homeTeam, away: awayTeam }), // ✅ correct order
+        body: JSON.stringify({ home: homeTeam, away: awayTeam }),
       });
       const data = await res.json();
       setPrediction(data);
+      setShowWarm(false); // hide banner when done
 
-      // 🔽 scroll down after prediction
       setTimeout(() => {
         resultsRef.current?.scrollIntoView({ behavior: "smooth" });
       }, 200);
     } catch (err) {
       console.error(err);
+      setShowWarm(false); // hide on error
     }
   };
 
@@ -91,6 +93,32 @@ export default function Predictor() {
 
       {/* Predictor card */}
       <div className="w-full max-w-4.6xl bg-white p-10 rounded-lg shadow-md border border-gray-200 text-center relative z-10">
+        {/* 🔥 Warming up banner */}
+        {showWarm && (
+          <div className="mb-4 rounded-lg px-4 py-3 text-sm flex items-center justify-center gap-3 bg-amber-50 text-amber-700 border border-amber-200">
+            <svg
+              className="animate-spin h-5 w-5"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+              />
+            </svg>
+            <span>Warming up server (first load may take ~30–60s)…</span>
+          </div>
+        )}
+
         {/* NFL Logo above title */}
         <img src={nflLogo} alt="NFL Logo" className="h-20 mx-auto mb-4" />
         <h1 className="text-3xl font-bold mb-2">NFL Win Predictor</h1>
@@ -106,6 +134,7 @@ export default function Predictor() {
               value={awayTeam}
               onChange={(e) => setAwayTeam(e.target.value)}
               className="w-full border rounded p-2"
+              disabled={showWarm}
             >
               <option value="">Select away team</option>
               {Object.keys(teamLogos).map((code) => (
@@ -122,6 +151,7 @@ export default function Predictor() {
               value={homeTeam}
               onChange={(e) => setHomeTeam(e.target.value)}
               className="w-full border rounded p-2"
+              disabled={showWarm}
             >
               <option value="">Select home team</option>
               {Object.keys(teamLogos).map((code) => (
@@ -136,9 +166,14 @@ export default function Predictor() {
         {/* Predict Button */}
         <button
           onClick={handlePredict}
-          className="bg-black text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#006778] transition-colors"
+          disabled={showWarm}
+          className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
+            showWarm
+              ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+              : "bg-black text-white hover:bg-[#006778]"
+          }`}
         >
-          Predict Winner
+          {showWarm ? "Predicting..." : "Predict Winner"}
         </button>
 
         {/* Prediction Results */}
@@ -149,7 +184,6 @@ export default function Predictor() {
           >
             <h2 className="text-2xl font-bold mb-6">Results</h2>
 
-            {/* Emphasize Ensemble */}
             <div className="mb-10 p-6 border rounded-lg bg-gray-50 shadow-md w-full">
               <h3 className="text-lg font-bold mb-2">🏆 Ensemble Winner</h3>
               <p className="text-3xl font-extrabold text-blue-600 mb-2">
@@ -163,8 +197,6 @@ export default function Predictor() {
               </p>
             </div>
 
-            {/* Pie charts side by side */}
-            {/* Pie charts responsive layout */}
             <div className="flex flex-col md:flex-row justify-center gap-8">
               {["logistic", "randomforest", "xgboost"].map((model) => {
                 const probs = prediction.probabilities[model];
@@ -189,7 +221,7 @@ export default function Predictor() {
                           nameKey="name"
                           cx="50%"
                           cy="50%"
-                          outerRadius={90} // ✅ smaller chart
+                          outerRadius={90}
                           label={({ name, value }) =>
                             `${name}: ${(value * 100).toFixed(1)}%`
                           }
@@ -207,7 +239,6 @@ export default function Predictor() {
                 );
               })}
             </div>
-
           </div>
         )}
       </div>
